@@ -1,4 +1,5 @@
 from django.template import Library
+from django.conf import settings
 
 from subdomains.utils import reverse
 
@@ -31,8 +32,14 @@ def url(context, view, subdomain=UNSET, *args, **kwargs):
        template rendering.
 
     """
+    request = context.get('request')
+    port = None
+
+    if getattr(settings, 'DEBUG', False) is True:
+        if request.META.get('SERVER_PORT'):
+            port = int(request.META['SERVER_PORT'])
+
     if subdomain is UNSET:
-        request = context.get('request')
         if request is not None:
             subdomain = getattr(request, 'subdomain', None)
         else:
@@ -40,4 +47,5 @@ def url(context, view, subdomain=UNSET, *args, **kwargs):
     elif subdomain is '':
         subdomain = None
 
-    return reverse(view, subdomain=subdomain, args=args, kwargs=kwargs)
+    return reverse(view, subdomain=subdomain, args=args, kwargs=kwargs,
+                   port=port)
